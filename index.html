@@ -5,16 +5,67 @@
 	<script src="https://code.createjs.com/createjs-2015.11.26.min.js"></script>
 </head>
 <body onload="init();">
-	<canvas id="testCanvas" width="500" height="500"></canvas>
+	<canvas id="demoCanvas" width="1000" height="500"></canvas>
 	<script type="text/javascript">
+		const PADDLE_WIDTH = 100;
+		const PADDLE_HEIGHT = 20;
+		const BRICKS_WIDTH = 60;
+		const BRICKS_HEIGHT = 30;
+		var stage;
+		var paddle;
+		var ball;
+
 		function init() {
-			var stage = new createjs.Stage("testCanvas");
-			var circle = new createjs.Shape();
-			circle.graphics.beginFill("red").drawCircle(0, 0, 90);
-			circle.x = circle.y = 250;
-			stage.addChild(circle);
-			stage.update();
+			stage = new createjs.Stage("demoCanvas");
+			createjs.Ticker.setFPS(60);
+			createjs.Ticker.addEventListener("tick", stage);
+
+			createBrickGrid();
+			createBall();
+			createPaddle();
 		}
+
+			function createBrickGrid () {
+				for(var i = 0; i < 14; i++) 
+					for(var j = 0; j < 5; j++) {
+						createBrick(i*(BRICKS_WIDTH+10)+40, j*(BRICKS_HEIGHT+5)+20);
+					}
+			}
+
+			function createBrick(x, y) {
+				var brick = new createjs.Shape();
+				brick.graphics.beginFill('#000FFF');
+				brick.graphics.drawRect(0, 0, BRICKS_WIDTH, BRICKS_HEIGHT);
+				brick.graphics.endFill(); //states completed of drawing of shape
+				stage.addChild(brick);
+
+				brick.regX = BRICKS_WIDTH/2;
+				brick.regY = BRICKS_HEIGHT/2;
+
+				brick.x = x;
+				brick.y = y;
+			}
+
+			function createBall() {
+				ball = new createjs.Shape();
+				ball.graphics.beginFill("red").drawCircle(0, 0, 8);
+				ball.x = stage.canvas.width/2;
+				ball.y = stage.canvas.height/2;
+				stage.addChild(ball);
+			}
+
+			function createPaddle() {
+				paddle = new createjs.Shape();
+				paddle.graphics.beginFill('#000000').drawRect(0, 0, PADDLE_WIDTH, PADDLE_HEIGHT);
+				paddle.y = 200;
+				paddle.x = stage.canvas.width/2 - PADDLE_WIDTH/2;
+				paddle.y = stage.canvas.height*0.9;
+				stage.addChild(paddle);
+			}
+
+			function destroyBrick(brick) {
+				createjs.Tween.get(brick,{}).to({scaleX: 0, scaleY: 0}, 500);
+			}
 	</script>
 </body>
 </html>
