@@ -12,6 +12,7 @@
 		const BRICKS_WIDTH = 60;
 		const BRICKS_HEIGHT = 30;
 		const BALL_RADIUS = 8;
+		const FULL_X_SPEED = 7;
 		var stage;
 		var paddle;
 		var ball;
@@ -48,6 +49,11 @@
 					bricks.splice(i, 1);
 					i--;
 				}
+			}
+
+			if(checkCollision(ball, paddle)) 
+			{
+				newBallXSpeedAfterCollision(ball, paddle);
 			}
 
 			//check if we've reached the walls
@@ -105,10 +111,43 @@
 					ballElement.y = topBorder - BALL_RADIUS;
 				}
 
-				
+				if((ballLeftBorder <= rightBorder) && (previousBallLeftBorder > rightBorder)) 
+				{
+					//Hit from the right
+					ballElement.right = true;
+					ballElement.x = rightBorder + BALL_RADIUS;
+				}
+
+				if((ballRightBorder >= leftBorder) && (previousBallRightBorder < leftBorder)) 
+				{
+					//Hit from the left
+					ballElement.right = false;
+					ballElement.x = leftBorder - BALL_RADIUS;
+				}
+
+				ballElement.lastX = ballElement.x;
+				ballElement.lastY = ballElement.y;
 				return true;
 			}
 			return false;
+		}
+
+		function newBallXSpeedAfterCollision(ballElement, hitElement) 
+		{
+			var startPoint = hitElement.x - hitElement.getBounds().width/2;
+			var midPoint = hitElement.x;
+			var endPoint = hitElement.x + hitElement.getBounds().width/2;
+
+			if(ballElement.x < midPoint) 
+			{
+				ball.right = false;
+				ball.xSpeed = FULL_X_SPEED - ((ballElement.x - startPoint)/(midPoint - startPoint)) * FULL_X_SPEED;
+			}
+			else 
+			{
+				ball.xSpeed = FULL_X_SPEED - ((endPoint - ballElement.x)/(endPoint - midPoint)) * FULL_X_SPEED;
+				ball.right = true;
+			}
 		}
 
 		function createBrickGrid () {
@@ -123,13 +162,14 @@
 			brick.graphics.beginFill('#000FFF');
 			brick.graphics.drawRect(0, 0, BRICKS_WIDTH, BRICKS_HEIGHT);
 			brick.graphics.endFill(); //states completed of drawing of shape
-			stage.addChild(brick);
+			
 
 			brick.regX = BRICKS_WIDTH/2;
 			brick.regY = BRICKS_HEIGHT/2;
-
 			brick.x = x;
 			brick.y = y;
+			brick.setBounds(brick.regX, brick.regY, BRICKS_WIDTH, BRICKS_HEIGHT);
+			stage.addChild(brick);
 			bricks.push(brick);
 		}
 
@@ -142,8 +182,8 @@
 
 			ball.up = true;
 			ball.right = true;
-			ball.xSpeed = 0;
-			ball.ySpeed = 1;
+			ball.xSpeed = 5;
+			ball.ySpeed = 5;
 			ball.lastX = 0;
 			ball.lastY = 0;
 		}
@@ -153,11 +193,20 @@
 			paddle.graphics.beginFill('#000000').drawRect(0, 0, PADDLE_WIDTH, PADDLE_HEIGHT);
 			paddle.x = stage.canvas.width/2 - PADDLE_WIDTH/2;
 			paddle.y = stage.canvas.height*0.9;
+			paddle.regX = PADDLE_WIDTH/2;
+			paddle.regY = PADDLE_HEIGHT/2;
+			paddle.setBounds(paddle.regX, paddle.regY, PADDLE_WIDTH, PADDLE_HEIGHT);
 			stage.addChild(paddle);
 		}
 
 		function destroyBrick(brick) {
 			createjs.Tween.get(brick,{}).to({scaleX: 0, scaleY: 0}, 500);
+			setTimeout(removeBrickFromScreen, 500, brick);
+		}
+
+		function removeBrickFromScreen(brick) 
+		{
+			stage.removeChild(brick);
 		}
 	</script>
 </body>
