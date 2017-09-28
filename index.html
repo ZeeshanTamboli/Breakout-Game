@@ -11,61 +11,154 @@
 		const PADDLE_HEIGHT = 20;
 		const BRICKS_WIDTH = 60;
 		const BRICKS_HEIGHT = 30;
+		const BALL_RADIUS = 8;
 		var stage;
 		var paddle;
 		var ball;
+		var bricks = [];
 
 		function init() {
 			stage = new createjs.Stage("demoCanvas");
 			createjs.Ticker.setFPS(60);
-			createjs.Ticker.addEventListener("tick", stage);
+			createjs.Ticker.addEventListener("tick", tick);
 
 			createBrickGrid();
 			createBall();
 			createPaddle();
 		}
 
-			function createBrickGrid () {
-				for(var i = 0; i < 14; i++) 
-					for(var j = 0; j < 5; j++) {
-						createBrick(i*(BRICKS_WIDTH+10)+40, j*(BRICKS_HEIGHT+5)+20);
-					}
+		function tick() {
+			stage.update();
+
+			if(ball.up) {
+				ball.y -= ball.ySpeed;
+			} else {
+				ball.y += ball.ySpeed;
 			}
 
-			function createBrick(x, y) {
-				var brick = new createjs.Shape();
-				brick.graphics.beginFill('#000FFF');
-				brick.graphics.drawRect(0, 0, BRICKS_WIDTH, BRICKS_HEIGHT);
-				brick.graphics.endFill(); //states completed of drawing of shape
-				stage.addChild(brick);
-
-				brick.regX = BRICKS_WIDTH/2;
-				brick.regY = BRICKS_HEIGHT/2;
-
-				brick.x = x;
-				brick.y = y;
+			if(ball.right) {
+				ball.x += ball.xSpeed;
+			} else {
+				ball.x -= ball.xSpeed;
 			}
 
-			function createBall() {
-				ball = new createjs.Shape();
-				ball.graphics.beginFill("red").drawCircle(0, 0, 8);
-				ball.x = stage.canvas.width/2;
-				ball.y = stage.canvas.height/2;
-				stage.addChild(ball);
+			for(var i = 0; i < bricks.length; i++) {
+				if(checkCollision(ball, bricks[i])) {
+					destroyBrick(bricks[i]);
+					bricks.splice(i, 1);
+					i--;
+				}
 			}
 
-			function createPaddle() {
-				paddle = new createjs.Shape();
-				paddle.graphics.beginFill('#000000').drawRect(0, 0, PADDLE_WIDTH, PADDLE_HEIGHT);
-				paddle.y = 200;
-				paddle.x = stage.canvas.width/2 - PADDLE_WIDTH/2;
-				paddle.y = stage.canvas.height*0.9;
-				stage.addChild(paddle);
+			//check if we've reached the walls
+			if(ball.x+BALL_RADIUS >= stage.canvas.width) {
+				ball.x = stage.canvas.width - BALL_RADIUS;
+				ball.right = false;
 			}
 
-			function destroyBrick(brick) {
-				createjs.Tween.get(brick,{}).to({scaleX: 0, scaleY: 0}, 500);
+			if(ball.x - BALL_RADIUS <= 0) {
+				ball.x = BALL_RADIUS;
+				ball.right = true;
 			}
+
+			if(ball.y - BALL_RADIUS <= 0) {
+				ball.y = BALL_RADIUS;
+				ball.up = false;
+			}
+
+			if(ball.y+BALL_RADIUS >= stage.canvas.height) {
+				ball.y = stage.canvas.height - BALL_RADIUS;
+				ball.up = true;
+			}
+
+			ball.lastX = ball.x;
+			ball.lastY = ball.y;
+		}
+
+		function checkCollision(ballElement, hitElement) {
+			var leftBorder = (hitElement.x - hitElement.getBounds().width/2);
+			var rightBorder = (hitElement.x + hitElement.getBounds().width/2);
+			var topBorder = (hitElement.y - hitElement.getBounds().height/2);
+			var bottomBorder = (hitElement.y + hitElement.getBounds().height/2);
+			var previousBallLeftBorder = ballElement.lastX - BALL_RADIUS;
+			var previousBallRightBorder = ballElement.lastX + BALL_RADIUS;
+			var previousBallTopBorder = ballElement.lastY - BALL_RADIUS;
+			var previousBallBottomBorder = ballElement.lastY + BALL_RADIUS;
+			var ballLeftBorder = ballElement.x - BALL_RADIUS;
+			var ballRightBorder = ballElement.x + BALL_RADIUS;
+			var ballTopBorder = ballElement.y - BALL_RADIUS;
+			var ballBottomBorder = ballElement.y + BALL_RADIUS;
+
+			if((ballLeftBorder<=rightBorder) && (ballRightBorder >= leftBorder) && (ballTopBorder <= bottomBorder) && (ballBottomBorder >= topBorder)) 
+			{
+				if((ballTopBorder <= bottomBorder) && (previousBallTopBorder > bottomBorder)) 
+				{
+					//Hit from the bottom
+					ballElement.up = false;
+					ballElement.y = bottomBorder + BALL_RADIUS;
+				}
+
+				if((ballBottomBorder >= topBorder) && (previousBallBottomBorder < topBorder)) 
+				{
+					//Hit from the top
+					ballElement.up = true;
+					ballElement.y = topBorder - BALL_RADIUS;
+				}
+
+				
+				return true;
+			}
+			return false;
+		}
+
+		function createBrickGrid () {
+			for(var i = 0; i < 14; i++) 
+				for(var j = 0; j < 5; j++) {
+					createBrick(i*(BRICKS_WIDTH+10)+40, j*(BRICKS_HEIGHT+5)+20);
+				}
+		}
+
+		function createBrick(x, y) {
+			var brick = new createjs.Shape();
+			brick.graphics.beginFill('#000FFF');
+			brick.graphics.drawRect(0, 0, BRICKS_WIDTH, BRICKS_HEIGHT);
+			brick.graphics.endFill(); //states completed of drawing of shape
+			stage.addChild(brick);
+
+			brick.regX = BRICKS_WIDTH/2;
+			brick.regY = BRICKS_HEIGHT/2;
+
+			brick.x = x;
+			brick.y = y;
+			bricks.push(brick);
+		}
+
+		function createBall() {
+			ball = new createjs.Shape();
+			ball.graphics.beginFill("red").drawCircle(0, 0, BALL_RADIUS);
+			ball.x = stage.canvas.width/2;
+			ball.y = stage.canvas.height/2;
+			stage.addChild(ball);
+
+			ball.up = true;
+			ball.right = true;
+			ball.xSpeed = 0;
+			ball.ySpeed = 1;
+			ball.lastX = 0;
+			ball.lastY = 0;
+		}
+
+		function createPaddle() {
+			paddle = new createjs.Shape();
+			paddle.graphics.beginFill('#000000').drawRect(0, 0, PADDLE_WIDTH, PADDLE_HEIGHT);
+			paddle.x = stage.canvas.width/2 - PADDLE_WIDTH/2;
+			paddle.y = stage.canvas.height*0.9;
+			stage.addChild(paddle);
+		}
+
+		function destroyBrick(brick) {
+			createjs.Tween.get(brick,{}).to({scaleX: 0, scaleY: 0}, 500);
+		}
 	</script>
 </body>
 </html>
