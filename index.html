@@ -17,15 +17,43 @@
 		var paddle;
 		var ball;
 		var bricks = [];
+		var score = 0;
+		var lives = 3;
+		var scoreText;
 
 		function init() {
 			stage = new createjs.Stage("demoCanvas");
 			createjs.Ticker.setFPS(60);
 			createjs.Ticker.addEventListener("tick", tick);
 
+			createScoreText();
+			addToScore(0);
 			createBrickGrid();
 			createBall();
 			createPaddle();
+		}
+
+		function loseLife() 
+		{
+			lives--;
+			scoreText.text = "Score: " + score + " / Lives " + lives;
+			ball.xSpeed = 0;
+			ball.ySpeed = 0;
+			ball.x = paddle.x;
+			ball.y = paddle.y - PADDLE_HEIGHT/2 - BALL_RADIUS;
+		}
+
+		function createScoreText() 
+		{
+			scoreText = new createjs.Text("", "16px Arial", "#000000");
+			scoreText.y = stage.canvas.height - 16;
+			stage.addChild(scoreText);
+		}
+
+		function addToScore(points) 
+		{
+			score += points;
+			scoreText.text = "Score: " + score + " / Lives " + lives;
 		}
 
 		function tick() {
@@ -45,6 +73,7 @@
 
 			for(var i = 0; i < bricks.length; i++) {
 				if(checkCollision(ball, bricks[i])) {
+					addToScore(100);
 					destroyBrick(bricks[i]);
 					bricks.splice(i, 1);
 					i--;
@@ -73,8 +102,7 @@
 			}
 
 			if(ball.y+BALL_RADIUS >= stage.canvas.height) {
-				ball.y = stage.canvas.height - BALL_RADIUS;
-				ball.up = true;
+				loseLife();
 			}
 
 			ball.lastX = ball.x;
