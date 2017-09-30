@@ -20,6 +20,7 @@
 		var score = 0;
 		var lives = 3;
 		var scoreText;
+		var gameStarted = false;
 
 		function init() {
 			stage = new createjs.Stage("demoCanvas");
@@ -29,8 +30,19 @@
 			createScoreText();
 			addToScore(0);
 			createBrickGrid();
-			createBall();
 			createPaddle();
+			createBall();
+
+			stage.on("stagemousedown", function(event) {
+				if(!gameStarted) 
+				{
+					gameStarted = true;
+					ball.xSpeed = 5;
+					ball.ySpeed = 5; 
+					ball.up = true;
+					ball.right = true;
+				}
+			});
 		}
 
 		function loseLife() 
@@ -41,6 +53,7 @@
 			ball.ySpeed = 0;
 			ball.x = paddle.x;
 			ball.y = paddle.y - PADDLE_HEIGHT/2 - BALL_RADIUS;
+			gameStarted = false;
 		}
 
 		function createScoreText() 
@@ -57,7 +70,27 @@
 		}
 
 		function tick() {
+
+			paddle.x = stage.mouseX;
 			stage.update();
+
+			if(paddle.x+PADDLE_WIDTH/2 > stage.canvas.width)
+			{
+				paddle.x = stage.canvas.width - PADDLE_WIDTH/2;
+			}
+			if(paddle.x - PADDLE_WIDTH/2 < 0)
+			{
+				paddle.x = PADDLE_WIDTH/2;  
+			}
+			stage.update();
+
+			if(!gameStarted) 
+			{
+				ball.x = paddle.x;
+				ball.y = paddle.y - PADDLE_HEIGHT/2 - BALL_RADIUS;
+				stage.update();
+				return;
+			}
 
 			if(ball.up) {
 				ball.y -= ball.ySpeed;
@@ -204,14 +237,14 @@
 		function createBall() {
 			ball = new createjs.Shape();
 			ball.graphics.beginFill("red").drawCircle(0, 0, BALL_RADIUS);
-			ball.x = stage.canvas.width/2;
-			ball.y = stage.canvas.height/2;
+			ball.x = paddle.x;
+			ball.y = paddle.y - PADDLE_HEIGHT/2 - BALL_RADIUS;
 			stage.addChild(ball);
 
 			ball.up = true;
 			ball.right = true;
-			ball.xSpeed = 5;
-			ball.ySpeed = 5;
+			ball.xSpeed = 0;
+			ball.ySpeed = 0;
 			ball.lastX = 0;
 			ball.lastY = 0;
 		}
